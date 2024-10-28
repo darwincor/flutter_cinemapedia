@@ -1,12 +1,14 @@
 import 'package:cinemapedia/infraestructure/datasources/movies_datasource.dart';
 import 'package:cinemapedia/infraestructure/mappers/movie_mapper.dart';
-import 'package:cinemapedia/infraestructure/models/movie_detail.dart';
-import 'package:cinemapedia/infraestructure/models/moviedb_response.dart';
+import 'package:cinemapedia/infraestructure/mappers/video_mapper.dart';
+import 'package:cinemapedia/infraestructure/models/moviedb/movie_details.dart';
+import 'package:cinemapedia/infraestructure/models/moviedb/moviedb_videos.dart';
+import 'package:cinemapedia/infraestructure/models/moviedb/moviedb_response.dart';
 import 'package:dio/dio.dart';
 
 import 'package:cinemapedia/config/constants/environment.dart';
 
-import 'package:cinemapedia/domain/entities/movie.dart';
+import 'package:cinemapedia/domain/entities/entities.dart';
 
 
 class MoviedbDatasource extends MoviesDatasource {
@@ -82,6 +84,7 @@ class MoviedbDatasource extends MoviesDatasource {
     return _jsonToMovies(response.data);    
   }
 
+
   @override
   Future<Movie> getMovieById( String id ) async {
 
@@ -92,7 +95,7 @@ class MoviedbDatasource extends MoviesDatasource {
     final Movie movie = MovieMapper.movieDetailsToEntity(movieDetails);
     return movie;
   }
-
+  
   @override
   Future<List<Movie>> searchMovies(String query) async{
 
@@ -106,4 +109,31 @@ class MoviedbDatasource extends MoviesDatasource {
 
     return _jsonToMovies(response.data);    
   }
+  
+
+
+  @override
+  Future<List<Movie>> getSimilarMovies(int movieId) async {
+    final response = await dio.get('/movie/$movieId/similar');
+    return _jsonToMovies(response.data);
+  }
+
+  
+  @override
+  Future<List<Video>> getYoutubeVideosById(int movieId) async {
+    final response = await dio.get('/movie/$movieId/videos');
+    final moviedbVideosReponse = MoviedbVideosResponse.fromJson(response.data);
+    final videos = <Video>[];
+
+    for (final moviedbVideo in moviedbVideosReponse.results) {
+      if ( moviedbVideo.site == 'YouTube' ) {
+        final video = VideoMapper.moviedbVideoToEntity(moviedbVideo);
+        videos.add(video);
+      }
+    }
+
+    return videos;
+  }
+
+
 }
